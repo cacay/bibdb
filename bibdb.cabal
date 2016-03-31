@@ -1,5 +1,5 @@
 name:                bibdb
-version:             0.1.1
+version:             0.2.0
 category:            Text
 synopsis:            A database based bibliography manager for BibTeX
 homepage:            https://github.com/cacay/bibdb
@@ -33,6 +33,9 @@ executable bibdb
                         optparse-applicative == 0.12.0.*,
                         transformers >= 0.2,
                         mtl >= 2.2.1 && < 2.3,
+                        microlens >= 0.3.4,
+                        microlens-mtl >= 0.1.5,
+                        microlens-th >= 0.2.1,
                         array >= 0.4,
                         containers >= 0.5,
                         bytestring == 0.10.6.*,

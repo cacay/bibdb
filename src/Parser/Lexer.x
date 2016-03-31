@@ -24,9 +24,12 @@ import Control.Monad.State (MonadState (..), gets, put, modify)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Int (Int64)
 
+import Lens.Micro
+import Lens.Micro.Mtl
 import Text.PrettyPrint
 import Text.PrettyPrint.HughesPJClass (Pretty (..))
 
+import Parser.AlexUserState
 import Parser.Location hiding (srcFile)
 import Parser.Token (Token (..), Lexeme (..))
 }
@@ -44,8 +47,9 @@ $upper       = [ A-Z ]
 $lower       = [ a-z ]
 $alpha       = [ $upper $lower ]
 
-$white_no_nl = [$white # $newline]
-$graphic = [$printable # $white]
+$white_no_nl = [ $white # $newline ]
+$graphic     = [ $printable # $white ]
+$comment     = [ $printable # $newline ]
 
 $valid = $graphic
 
@@ -54,7 +58,7 @@ $valid = $graphic
 -- Alex "Regular expression macros"
 
 @stype     = $alpha+
-@ident    = $valid+
+@ident     = $valid+
 
 
 -- -----------------------------------------------------------------------------
@@ -63,15 +67,27 @@ $valid = $graphic
 tokens :-
 
 -- States:
---   - 0      : Unused since 0 is a non-descriptive name
+--   - 0       : Unused since 0 is a non-descriptive name
 --   - stype   : Lexing a reference type
---   - ident  : Lexing an identifier
+--   - ident   : Lexing an identifier
+--   - comment : Lexing a multi-line comment
 
 -- We do not use the 0 state since it is non-descriptive
 <0> ()         { just $ switchTo stype }
 
+
 -- Ignore white space
 <stype, ident> $white         ;
+
+
+-- Comments
+<stype, ident> [\-]{2,} $comment*   ;
+
+<stype, ident, comment> "{-"        { just $ pushCode comment }
+<comment>    "-}"                   { just $ popCode }
+<comment>    $comment               ;
+<comment>    $newline               ;
+
 
 -- Keywords
 <stype> as          { mkTok (const TAs) `also` switchTo ident }
@@ -80,7 +96,6 @@ tokens :-
 -- Types and identifiers
 <stype>  @stype      { mkTok TType }
 <ident>  @ident     { mkTok TIdent `also` switchTo stype }
-
 
 {
 
@@ -104,22 +119,18 @@ instance MonadState AlexState Alex where
 -- -----------------------------------------------------------------------------
 -- Alex "User state"
 
-data AlexUserState = AlexUserState
-  { srcFile       :: FilePath
-  }
+-- | A lens that can be used to get, set, and modify the user state
+userState :: Lens' AlexState AlexUserState
+userState f s = (\ust -> s { alex_ust = ust}) <$> f (alex_ust s)
 
-alexInitUserState :: AlexUserState
-alexInitUserState = AlexUserState
-  { srcFile        = "<no file>"
-  }
 
 -- | Get source file name
 getSrcFile :: Alex FilePath
-getSrcFile = gets (srcFile . alex_ust)
+getSrcFile = use (userState . srcFile)
 
 -- | Set source file name
 setSrcFile :: FilePath -> Alex ()
-setSrcFile name = modify (\s -> s {alex_ust = AlexUserState {srcFile = name}})
+setSrcFile name = userState . srcFile .= name
 
 
 -- -----------------------------------------------------------------------------
@@ -127,6 +138,8 @@ setSrcFile name = modify (\s -> s {alex_ust = AlexUserState {srcFile = name}})
 
 alexEOF :: Alex Lexeme
 alexEOF = do
+  code <- alexGetStartCode
+  when (code == comment) $ lexError "unmatched comment"
   loc <- getSrcLoc
   return $ Lexeme (srcLocSpan loc) TEof
 
@@ -159,6 +172,50 @@ lexError msg = do
 
 
 -- -----------------------------------------------------------------------------
+-- Alex "Startcode stack management"
+
+-- | Push the current startcode on the stack and switch to a new startcode
+alexPushStartCode :: StartCode -> Alex ()
+alexPushStartCode s = do
+  current <- alexGetStartCode
+  state <- use (userState . prevStartCodes)
+  alexSetState (s : current : state)
+
+-- | Drop the current startcode and switch to the top startcode on the stack
+alexPopStartCode :: Alex ()
+alexPopStartCode = use (userState . prevStartCodes) >>= alexSetState
+
+-- | Set the entire state of the lexer at once changing all startcodes.
+-- Head of the list becomes the current startcode and the tail becomes
+-- the stack of previous startcodes.
+alexSetState :: [StartCode] -> Alex ()
+alexSetState [] = lexError "No startcodes in the stack. Lexer state cannot be empty."
+alexSetState (x : xs) = do
+  userState . prevStartCodes .= xs
+  alexSetStartCode x
+
+-- | Get the entire state of the lexer.
+alexGetState :: Alex ([StartCode])
+alexGetState = do
+  current <- alexGetStartCode
+  state <- use (userState . prevStartCodes)
+  return (current : state)
+
+-- | Shorthand for 'alexPushStartCode'
+pushCode :: StartCode -> Alex ()
+pushCode = alexPushStartCode
+
+-- | ShortHand for 'alexPopStartCode'
+popCode :: Alex ()
+popCode = alexPopStartCode
+
+
+-- | More informative name for 'begin'
+switchTo :: StartCode -> Alex ()
+switchTo = alexSetStartCode
+
+
+-- -----------------------------------------------------------------------------
 -- Alex "Useful combinators for actions"
 
 -- | Nicer interface for Alex actions
@@ -182,10 +239,6 @@ just m _ _ = m >> alexMonadScan
 -- | Execute the monad and return the action
 also :: AlexAction' result -> Alex a -> AlexAction' result
 (act `also` m) input len = m >> act input len
-
--- | More informative name for 'begin'
-switchTo :: StartCode -> Alex ()
-switchTo = alexSetStartCode
 
 
 -- -----------------------------------------------------------------------------
