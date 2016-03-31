@@ -17,9 +17,11 @@ import Utility.Except
 
 
 fetch :: BibSize -> Source -> Exception (RefIdent, [BibTeX])
-fetch size (Source t key) = case t of
-  Dblp -> Dblp.fetch size key
-  _ -> undefined
+fetch size source@(Source t key) = do
+  liftIO $ putStrLn $ "Fetching " ++ show source
+  case t of
+    Dblp -> Dblp.fetch size key
+    _ -> undefined
 
 
 fetchAll :: BibSize -> [Source] -> Exception ([RefIdent], [BibTeX])

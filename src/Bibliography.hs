@@ -13,6 +13,7 @@ module Bibliography (bibliography) where
 
 import Control.Arrow ((&&&))
 
+import Data.Maybe (mapMaybe)
 import qualified Data.Map.Strict as Map
 import qualified Data.Graph as Graph
 import qualified Data.Tree as Tree
@@ -39,8 +40,9 @@ topsort bib = map ((\(bib, _, _) -> bib) . vertexMap) sorted
 reachable :: [RefIdent] -> [BibTeX] -> [BibTeX]
 reachable roots bib = map ((\(bib, _, _) -> bib) . vertexMap) reachableVertecies
   where
-    (g, vertexMap, _) = Graph.graphFromEdges $ map bibToNode bib
-    reachableVertecies = concatMap Tree.flatten (Graph.dff g)
+    (g, vertexMap, key) = Graph.graphFromEdges $ map bibToNode bib
+    rootsVertex = mapMaybe key roots
+    reachableVertecies = concatMap Tree.flatten (Graph.dfs g rootsVertex)
 
 bibToNode :: BibTeX -> (BibTeX, RefIdent, [RefIdent])
 bibToNode bib = (bib, bibIdent bib, crossrefs bib)
