@@ -11,6 +11,15 @@ license-file:        LICENSE
 author:              Josh Acay
 maintainer:          coskuacay@gmail.con
 
+description:
+  bibdb is a simple citation resolver and bibliography manager for BibTeX.
+  Instead of manually copy pasting bibliographies, you specify a reference
+  to the work you want to cite (by providing a DOI or a DBLP key, for example)
+  in a simple domain specific language. bibdb is then responsible for fetching
+  the citations, renaming them, removing duplicates, and sorting them properly.
+
+  For more information, see the <https://github.com/cacay/bibdb>.
+
 build-type:          Simple
 cabal-version:       >=1.10
 
