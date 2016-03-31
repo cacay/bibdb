@@ -12,6 +12,7 @@ import Args (BibSize)
 import Reference
 
 import qualified Database.Dblp as Dblp
+import qualified Database.Doi as Doi
 
 import Utility.Except
 
@@ -21,6 +22,7 @@ fetch size source@(Source t key) = do
   liftIO $ putStrLn $ "Fetching " ++ show source
   case t of
     Dblp -> Dblp.fetch size key
+    Doi -> Doi.fetch size key
     _ -> undefined
 
 

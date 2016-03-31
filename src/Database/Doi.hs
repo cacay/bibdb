@@ -1,13 +1,16 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      : Database.Dblp
--- Description : Communication protocols for dblp
+-- Module      : Database.Doi
+-- Description : Communication protocols for DOI
 -- Maintainer  : coskuacay@gmail.com
 -- Stability   : experimental
 -----------------------------------------------------------------------------
-module Database.Dblp (fetch, fetchString) where
+module Database.Doi (fetch, fetchString) where
 
-import Network.Curl.Download (openURIString)
+import qualified Data.ByteString.Char8 as ByteString
+
+import Network.Curl.Download (openURIWithOpts)
+import Network.Curl.Opts
 
 import Args (BibSize (..))
 import Reference
@@ -26,15 +29,15 @@ fetch size key = do
 
 fetchString :: BibSize -> SourceKey -> Exception String
 fetchString size key = do
-  res <- liftIO $ openURIString (getUrl size key)
-  liftEither res
+  res <- liftIO $ openURIWithOpts headers (getUrl size key)
+  bs <- liftEither res
+  return $ ByteString.unpack bs
+  where
+    headers = [ CurlFollowLocation True
+              , CurlHttpHeaders ["Accept: application/x-bibtex"]
+              ]
 
 
 getUrl :: BibSize -> SourceKey -> String
-getUrl size (SourceKey key) =
-  "http://dblp.uni-trier.de/rec/" ++ parseSize size ++ "/" ++ key ++ ".bib"
-  where parseSize :: BibSize -> String
-        parseSize Condensed = "bib0"
-        parseSize Standard  = "bib1"
-        parseSize Crossref  = "bib2"
+getUrl size (SourceKey key) = "http://dx.doi.org/" ++ key
 
