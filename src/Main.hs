@@ -67,7 +67,8 @@ runJob job = do
 
   let renames = zip ids (map Parser.entryIdent entries)
   let final = bibliography renames database
-  liftIO $ writeFile outputFile (renderList final)
+  let msg = "Automatically generated file. DO NOT MODIFY!\n"
+  liftIO $ writeFile outputFile (msg ++ "\n" ++ renderList final)
 
   where
     outputFile :: FilePath
