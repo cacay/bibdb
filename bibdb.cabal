@@ -1,5 +1,5 @@
 name:                bibdb
-version:             0.4.1
+version:             0.4.2
 category:            Text
 synopsis:            A database based bibliography manager for BibTeX
 homepage:            https://github.com/cacay/bibdb
@@ -39,9 +39,25 @@ executable bibdb
 
   main-is:              Main.hs
 
-  build-tools:          alex, happy
+  other-modules:        Args
+                        Bibliography
+                        Reference
 
-  other-modules:        Parser.Lexer, Parser.Parser
+                        Database.Fetch
+                        Database.ArXiv
+                        Database.Dblp
+                        Database.Doi
+                        Database.Hal
+
+                        Parser.AlexUserState
+                        Parser.Location
+                        Parser.Token
+                        Parser.Lexer
+                        Parser.Parser
+
+                        Utility.Except
+
+  build-tools:          alex, happy
 
   build-depends:        base >= 4.6 && < 5,
                         filepath >= 1 && < 2,
