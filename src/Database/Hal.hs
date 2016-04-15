@@ -1,11 +1,11 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      : Database.Doi
--- Description : Communication protocols for DOI
+-- Module      : Database.Hal
+-- Description : Communication protocols for HAL and Inria
 -- Maintainer  : coskuacay@gmail.com
 -- Stability   : experimental
 -----------------------------------------------------------------------------
-module Database.Doi (fetchString) where
+module Database.Hal (fetchString) where
 
 import qualified Data.ByteString.Char8 as ByteString
 
@@ -24,11 +24,10 @@ fetchString size key = do
   bs <- liftEither res
   return $ ByteString.unpack bs
   where
-    headers = [ CurlFollowLocation True
-              , CurlHttpHeaders ["Accept: application/x-bibtex"]
-              ]
+    headers = [ CurlFollowLocation True ]
 
 
 getUrl :: BibSize -> SourceKey -> String
-getUrl size (SourceKey key) = "http://dx.doi.org/" ++ key
+getUrl size (SourceKey key) =
+  "http://hal.inria.fr/" ++ key ++ "/bibtex"
 

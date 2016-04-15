@@ -11,8 +11,10 @@ module Database.Fetch (fetch, fetchAll) where
 import Args (BibSize)
 import Reference
 
-import qualified Database.Dblp as Dblp
 import qualified Database.Doi as Doi
+import qualified Database.Dblp as Dblp
+import qualified Database.ArXiv as ArXiv
+import qualified Database.Hal as Hal
 
 import Utility.Except
 
@@ -20,10 +22,23 @@ import Utility.Except
 fetch :: BibSize -> Source -> Exception (RefIdent, [BibTeX])
 fetch size source@(Source t key) = do
   liftIO $ putStrLn $ "Fetching " ++ show source
-  case t of
-    Dblp -> Dblp.fetch size key
-    Doi -> Doi.fetch size key
-    _ -> undefined
+  bibstr <- fetchString size key
+  case parseBibTeX bibstr of
+    Left err -> throwError $ "Error: cannot parse server response:\n" ++ err
+    Right bibtex@(h : _) -> return (bibIdent h, bibtex)
+    Right _ -> throwError $ "Error: empty response from server"
+  where
+    fetchString :: BibSize -> SourceKey -> Exception String
+    fetchString = case t of
+      Doi -> Doi.fetchString
+      Dblp -> Dblp.fetchString
+      ArXiv -> ArXiv.fetchString
+      Hal -> Hal.fetchString
+      Inria -> \size key -> Hal.fetchString size (inriaToHalKey key)
+      _ -> undefined
+
+    inriaToHalKey :: SourceKey -> SourceKey
+    inriaToHalKey (SourceKey key) = SourceKey ("inria-" ++ key)
 
 
 fetchAll :: BibSize -> [Source] -> Exception ([RefIdent], [BibTeX])

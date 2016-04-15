@@ -1,0 +1,8 @@
+
+-- Using different types of sources
+
+DOI:10.1126/science.169.3946.635 as science
+DBLP:conf/fossacs/PfenningG15 as PfenningG15
+arXiv:1603.08515 as ConradieP16
+HAL:inria-00074412v1 as Damm94b
+

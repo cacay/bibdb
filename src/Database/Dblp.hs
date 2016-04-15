@@ -5,7 +5,7 @@
 -- Maintainer  : coskuacay@gmail.com
 -- Stability   : experimental
 -----------------------------------------------------------------------------
-module Database.Dblp (fetch, fetchString) where
+module Database.Dblp (fetchString) where
 
 import Network.Curl.Download (openURIString)
 
@@ -13,15 +13,6 @@ import Args (BibSize (..))
 import Reference
 
 import Utility.Except
-
-
-fetch :: BibSize -> SourceKey -> Exception (RefIdent, [BibTeX])
-fetch size key = do
-  bibstr <- fetchString size key
-  case parseBibTeX bibstr of
-    Left err -> throwError $ "Error while parsing the server result:\n" ++ err
-    Right bibtex@(h : _) -> return (bibIdent h, bibtex)
-    Right _ -> throwError $ "Invalid response from server"
 
 
 fetchString :: BibSize -> SourceKey -> Exception String

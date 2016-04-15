@@ -32,7 +32,12 @@ data Source = Source
   }
   deriving (Eq, Ord)
 
-data SourceType = Dblp | CiteSeerX | Doi
+data SourceType = Doi
+                | Dblp
+                | ArXiv
+                | CiteSeerX
+                | Hal
+                | Inria
   deriving (Eq, Ord)
 
 newtype SourceKey = SourceKey String
@@ -82,9 +87,12 @@ instance Pretty Source where
   pPrint (Source t key) = pPrint t <> colon <> pPrint key
 
 instance Pretty SourceType where
-  pPrint Dblp = text "DBLP"
-  pPrint CiteSeerX = text "CiteSeerX"
   pPrint Doi = text "DOI"
+  pPrint Dblp = text "DBLP"
+  pPrint ArXiv = text "arXiv"
+  pPrint CiteSeerX = text "CiteSeerX"
+  pPrint Hal = text "HAL"
+  pPrint Inria = text "inria"
 
 instance Pretty SourceKey where
   pPrint (SourceKey key) = text key
@@ -102,7 +110,6 @@ instance Pretty BibTeX where
     where
       printField :: (String, String) -> Doc
       printField (name, value) = text name <+> equals <+> braces (text value)
-
 
 
 ----------------------------------------------------------------------------

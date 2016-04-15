@@ -175,11 +175,15 @@ parseSource loc (Lexeme _ (TType t)) key = do
 parseSource loc _ key = undefined
 
 parseType :: String -> Alex SourceType
+parseType "DOI" = return Doi
+parseType "doi" = return Doi
+parseType "arXiv" = return ArXiv
 parseType "DBLP" = return Dblp
 parseType "dblp" = return Dblp
 parseType "CiteSeerX" = return CiteSeerX
-parseType "DOI" = return Doi
-parseType "doi" = return Doi
+parseType "HAL" = return Hal
+parseType "hal" = return Hal
+parseType "inria" = return Inria
 parseType t = lexError $ "invalid source type" ++ t
 
 
