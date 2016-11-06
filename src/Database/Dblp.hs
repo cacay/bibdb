@@ -7,6 +7,9 @@
 -----------------------------------------------------------------------------
 module Database.Dblp (fetchString) where
 
+import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO (..))
+
 import Network.Curl.Download (openURIString)
 
 import Args (BibSize (..))
@@ -15,7 +18,7 @@ import Reference
 import Utility.Except
 
 
-fetchString :: BibSize -> SourceKey -> Exception String
+fetchString :: (MonadError String m, MonadIO m) => BibSize -> SourceKey -> m String
 fetchString size key = do
   res <- liftIO $ openURIString (getUrl size key)
   liftEither res

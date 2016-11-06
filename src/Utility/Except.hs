@@ -6,19 +6,13 @@
 -- Stability   : experimental
 -----------------------------------------------------------------------------
 module Utility.Except
-  ( module Control.Monad.Except
-  , MonadIO (..)
-  , Exception
-  , liftEither
+  ( liftEither
   ) where
+
 import Control.Monad.Except
-import Control.Monad.IO.Class (MonadIO (..))
 
 
-type Exception = ExceptT String IO
-
-
-liftEither :: Monad m => Either e a -> ExceptT e m a
+liftEither :: (MonadError e m) => Either e a -> m a
 liftEither (Left e) = throwError e
 liftEither (Right a) = return a
 

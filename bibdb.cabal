@@ -78,6 +78,7 @@ executable bibdb
 
   default-extensions:   PatternGuards,
                         ScopedTypeVariables,
+                        FlexibleContexts
                         MultiParamTypeClasses
 
   other-extensions:     FlexibleInstances

@@ -7,6 +7,9 @@
 -----------------------------------------------------------------------------
 module Database.ArXiv (fetchString) where
 
+import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO (..))
+
 import qualified Data.ByteString.Char8 as ByteString
 
 import Network.Curl.Download (openURIWithOpts)
@@ -18,7 +21,7 @@ import Reference
 import Utility.Except
 
 
-fetchString :: BibSize -> SourceKey -> Exception String
+fetchString :: (MonadError String m, MonadIO m) => BibSize -> SourceKey -> m String
 fetchString size key = do
   res <- liftIO $ openURIWithOpts headers (getUrl size key)
   bs <- liftEither res

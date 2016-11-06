@@ -8,6 +8,9 @@
 -----------------------------------------------------------------------------
 module Database.Fetch (fetch, fetchAll) where
 
+import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO (..))
+
 import Args (BibSize)
 import Reference
 
@@ -19,7 +22,7 @@ import qualified Database.Hal as Hal
 import Utility.Except
 
 
-fetch :: BibSize -> Source -> Exception (RefIdent, [BibTeX])
+fetch :: (MonadError String m, MonadIO m) => BibSize -> Source -> m (RefIdent, [BibTeX])
 fetch size source@(Source t key) = do
   liftIO $ putStrLn $ "Fetching " ++ show source
   bibstr <- fetchString size key
@@ -28,7 +31,7 @@ fetch size source@(Source t key) = do
     Right bibtex@(h : _) -> return (bibIdent h, bibtex)
     Right _ -> throwError $ "Error: empty response from server"
   where
-    fetchString :: BibSize -> SourceKey -> Exception String
+    fetchString :: (MonadError String m, MonadIO m) => BibSize -> SourceKey -> m String
     fetchString = case t of
       Doi -> Doi.fetchString
       Dblp -> Dblp.fetchString
@@ -41,7 +44,7 @@ fetch size source@(Source t key) = do
     inriaToHalKey (SourceKey key) = SourceKey ("inria-" ++ key)
 
 
-fetchAll :: BibSize -> [Source] -> Exception ([RefIdent], [BibTeX])
+fetchAll :: (MonadError String m, MonadIO m) => BibSize -> [Source] -> m ([RefIdent], [BibTeX])
 fetchAll size srcs = do
   results <- mapM (fetch size) srcs
   let (idents, bibs) = unzip results
