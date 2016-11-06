@@ -8,6 +8,7 @@
 -----------------------------------------------------------------------------
 module Database.Fetch (fetch, fetchAll) where
 
+import Control.Concurrent.Async
 import Control.Monad.Except
 import Control.Monad.IO.Class (MonadIO (..))
 
@@ -46,7 +47,8 @@ fetch size source@(Source t key) = do
 
 fetchAll :: (MonadError String m, MonadIO m) => BibSize -> [Source] -> m ([RefIdent], [BibTeX])
 fetchAll size srcs = do
-  results <- mapM (fetch size) srcs
+  maybeResults <- liftIO $ mapConcurrently (runExceptT . fetch size) srcs
+  results <- liftEither $ sequence maybeResults
   let (idents, bibs) = unzip results
   return (idents, concat bibs)
 
