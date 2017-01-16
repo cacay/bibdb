@@ -1,5 +1,5 @@
 name:                bibdb
-version:             0.5.3
+version:             0.6.3
 category:            Text
 synopsis:            A database based bibliography manager for BibTeX
 homepage:            https://github.com/cacay/bibdb
