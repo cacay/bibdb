@@ -19,12 +19,13 @@ data Job = Job
   { jobSource           :: FilePath
   , jobOutput           :: Maybe FilePath
   , jobBibSize          :: BibSize
+  , jobEnrich           :: [String]
   , jobStopAt           :: Stage
   , jobKeepIntermediate :: Bool
   }
 
 -- | Processing stage
-data Stage = Lexing | Parsing | Downloading | Output
+data Stage = Lexing | Parsing | Downloading | Enrichment | Output
   deriving (Eq, Ord, Show)
 
 -- | Bibliography size
@@ -43,12 +44,19 @@ jobParser = Job
      <> help "Place the output into <FILE>"
       ))
   <*> bibSizeParser
+  <*> many (strOption
+      ( long "enrich"
+     <> short 'e'
+     <> metavar "ENTRY"
+     <> help "Try to add missing entries (e.g. DOI, URL)"
+      ))
   <*> stageParser
   <*> switch
       ( long "save-temps"
      <> short 't'
      <> help "Save intermediate forms"
       )
+
 
 bibSizeParser :: Parser BibSize
 bibSizeParser =
@@ -76,6 +84,10 @@ stageParser =
   <|> flag completeRun Downloading
       ( long "download"
      <> help "Download references but do not generate output"
+      )
+  <|> flag completeRun Enrichment
+      ( long "enrich"
+     <> help "Stop after enrichment"
       )
   <|> flag completeRun Output
       ( long "complete-run"

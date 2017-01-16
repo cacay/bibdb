@@ -28,6 +28,7 @@ import Parser.Location (Located (..), spanSLine)
 import qualified Parser.Parser as Parser
 import Database.Fetch (fetchAll)
 import Bibliography (bibliography)
+import Enrich (enrich)
 
 import Utility.Except
 
@@ -59,14 +60,22 @@ runJob job = do
 
   entries <- liftEither $ Parser.runParser bib $
                Parser.fileParser $ Args.jobSource job
+  let sources = map Parser.entrySource entries
   save "parsing" entries
-  when (Args.jobStopAt job == Args.Parsing) $ printAndExit entries
+  when (Args.jobStopAt job == Args.Parsing) $
+    printAndExit entries
 
   checkDuplicatesOn Parser.entryIdent entries
 
-  (ids, database) <- fetchAll (Args.jobBibSize job) (map Parser.entrySource entries)
+  (ids, database) <- fetchAll (Args.jobBibSize job) sources
   save "gather" database
-  when (Args.jobStopAt job == Args.Downloading) $ printAndExit database
+  when (Args.jobStopAt job == Args.Downloading) $
+    printAndExit database
+
+  database <- enrich (Args.jobBibSize job) (Args.jobEnrich job) database (zip ids sources)
+  save "enrichment" database
+  when (Args.jobStopAt job == Args.Enrichment) $
+    printAndExit database
 
   let renames = zip ids (map Parser.entryIdent entries)
   let final = bibliography renames database

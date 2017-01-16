@@ -41,6 +41,7 @@ executable bibdb
 
   other-modules:        Args
                         Bibliography
+                        Enrich
                         Reference
 
                         Database.Fetch
@@ -77,10 +78,11 @@ executable bibdb
                         download-curl,
                         async
 
-  default-extensions:   PatternGuards,
-                        ScopedTypeVariables,
+  default-extensions:   PatternGuards
+                        ScopedTypeVariables
                         FlexibleContexts
                         MultiParamTypeClasses
+                        NamedFieldPuns
 
   other-extensions:     FlexibleInstances
                         GeneralizedNewtypeDeriving

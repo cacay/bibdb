@@ -14,9 +14,12 @@ module Reference
   , parseBibTeX
   , renameBib
   , crossrefs
+  , lookupField
+  , addField
   ) where
 
 import Data.Char (toLower)
+import qualified Data.List as List
 
 import Text.PrettyPrint
 import Text.PrettyPrint.HughesPJClass (Pretty (..), prettyShow)
@@ -59,11 +62,26 @@ renameBib :: RefIdent -> BibTeX -> BibTeX
 renameBib new bib = bib {bibIdent = new}
 
 crossrefs :: BibTeX -> [RefIdent]
-crossrefs (BibTeX _ _ fields) =
+crossrefs (BibTeX { bibFields = fields }) =
   map (RefIdent . snd) (filter isCrossref fields)
   where
     isCrossref :: (String, String) -> Bool
     isCrossref (name, _) = map toLower name == "crossref"
+
+
+lookupField :: String -> BibTeX -> Maybe String
+lookupField key (BibTeX {bibFields = fields}) = do
+    match <- List.find (compare key . fst) fields
+    return (snd match)
+    where
+        compare :: String -> String -> Bool
+        compare k1 =
+            (map toLower k1 ==) . map toLower
+
+
+addField :: String -> String -> BibTeX -> BibTeX
+addField key value bib =
+    bib {bibFields = bibFields bib ++ [(key, value)]}
 
 
 ----------------------------------------------------------------------------
